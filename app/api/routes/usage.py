@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -28,16 +28,28 @@ def _parse_dt(s: str) -> datetime:
 @router.get("")
 def usage_report(
     tenant_id: UUID = Query(...),
-    start: str = Query(..., description="ISO datetime, e.g. 2026-03-02T04:00:00Z"),
-    end: str = Query(..., description="ISO datetime, e.g. 2026-03-02T04:10:00Z"),
+    start: str | None = Query(None, description="ISO datetime, e.g. 2026-03-02T04:00:00Z"),
+    end: str | None = Query(None, description="ISO datetime, e.g. 2026-03-02T04:10:00Z"),
+    last_minutes: int | None = Query(
+        None, ge=1, le=24 * 60, description="If provided, ignores start/end and returns last N minutes"
+    ),
     db: Session = Depends(get_db),
 ):
     tenant = db.query(Tenant).filter(Tenant.id == tenant_id).one_or_none()
     if tenant is None:
         raise HTTPException(status_code=404, detail="Tenant not found")
 
-    start_dt = _parse_dt(start)
-    end_dt = _parse_dt(end)
+    now = datetime.now(timezone.utc)
+
+    if last_minutes is not None:
+        end_dt = now
+        start_dt = now - timedelta(minutes=last_minutes)
+    else:
+        if start is None or end is None:
+            raise HTTPException(status_code=400, detail="Provide start and end, or use last_minutes")
+        start_dt = _parse_dt(start)
+        end_dt = _parse_dt(end)
+
     if end_dt < start_dt:
         raise HTTPException(status_code=400, detail="end must be >= start")
 
