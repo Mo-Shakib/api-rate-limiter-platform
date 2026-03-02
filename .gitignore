@@ -26,3 +26,6 @@ htmlcov/
 
 # Logs
 *.log
+
+**/__pycache__/
+*.egg-info/
