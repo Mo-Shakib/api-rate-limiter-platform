@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class ApiKeyCreate(BaseModel):
@@ -9,6 +9,8 @@ class ApiKeyCreate(BaseModel):
 
 
 class ApiKeyOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     tenant_id: UUID
     key_prefix: str
@@ -16,9 +18,6 @@ class ApiKeyOut(BaseModel):
     status: str
     created_at: datetime
     revoked_at: datetime | None
-
-    class Config:
-        from_attributes = True
 
 
 class ApiKeyCreatedResponse(BaseModel):
