@@ -73,5 +73,4 @@ def enforce_api_key_and_rate_limit(request: Request, db: Session) -> ApiKey:
         raise HTTPException(status_code=429, detail="Rate limit exceeded")
     # Count usage only if request is allowed (not rate-limited)
     increment_usage(key.id)
-    
     return key
